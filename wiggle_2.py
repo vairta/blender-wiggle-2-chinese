@@ -669,7 +669,7 @@ class WiggleBake(bpy.types.Operator):
                 context.scene.frame_set(context.scene.frame_start)
             context.scene.wiggle.is_preroll = True
             preroll -= 1
-        # 烘培
+        # 烘培Wiggle
         bpy.ops.nla.bake(frame_start = context.scene.frame_start,
                         frame_end = context.scene.frame_end,
                         only_selected = True,
