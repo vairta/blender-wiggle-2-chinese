@@ -10,19 +10,19 @@ bl_info = {
     "category": "Animation",
 }
 
-### TO DO #####
+### 清单 #####
 
-# Basic object wiggle?
-# handle inherit rotation?
+# 基本物体摆动？
+# 处理继承旋转？
 
 # bugs:
-# weird glitch when starting playback?
+# 开始播放时出现奇怪的问题？
 
 import bpy, math
 from mathutils import Vector, Matrix, Euler, Quaternion, geometry
 from bpy.app.handlers import persistent
 
-#return m2 in m1 space
+# 在M1空间返回M2
 def relative_matrix(m1,m2):
     return (m2.inverted() @ m1).inverted()
 
@@ -144,9 +144,9 @@ def collide(b,dg,head=False):
         v = i-pos
         
         if (n.dot(v.normalized()) > 0.01) or (v.length < radius) or (co and (v.length < (radius+sticky))):
-            if n.dot(v.normalized()) > 0: #vec is below
+            if n.dot(v.normalized()) > 0: # vec 在下面
                 nv = v.normalized()
-            else: #normal is opposite dir to vec
+            else: # normal 在 dir 和 vec 的对面
                 nv = -v.normalized()
             pos = i + nv*radius
             
@@ -159,7 +159,7 @@ def collide(b,dg,head=False):
             cn = nv
     if not col:
         co = None
-#        cp = cn = Vector((0,0,0))
+#       cp = cn = Vector((0,0,0))
     
     if head:
         b.wiggle.position_head = pos
@@ -239,7 +239,7 @@ def pin(b):
             b.wiggle.position = b.wiggle.position*(1-c.influence) + c.target.location*c.influence
             break
 
-#can include gravity, wind, etc    
+# 可以包括重力、风力等
 def move(b,dg):
     dt = bpy.context.scene.wiggle.dt
     dt2 = dt * dt
@@ -291,7 +291,7 @@ def constrain(b,i,dg):
             mat = b.id_data.matrix_world @ b.matrix
         update_p = False  
         
-        #spring
+        # 弹性
         if b.wiggle_head and not b.bone.use_connect:
             target = mat.translation
             s = spring(target, b.wiggle.position_head, b.wiggle_stiff_head)
@@ -324,7 +324,7 @@ def constrain(b,i,dg):
             s = spring(target, b.wiggle.position, b.wiggle_stiff)
             if p and b.wiggle_chain and p.wiggle_tail: # and b.bone.use_connect:
                 fac = get_fac(b.wiggle_mass, p.wiggle_mass) if i else p.wiggle_stretch
-                if p == b.parent and b.bone.use_connect: #direct parent optimization
+                if p == b.parent and b.bone.use_connect: # 直接父级优化
                     p.wiggle.position -= s*fac
                 else:
                     headpos = mat.translation
@@ -345,12 +345,12 @@ def constrain(b,i,dg):
             else:
                 b.wiggle.position += s
                 
-        #stretch
+        # 拉伸
         if b.wiggle_head and not b.bone.use_connect:
             if p:
                 if b.parent == p and p.wiggle_tail:
                     target = p.wiggle.position + (b.wiggle.position_head - p.wiggle.position).normalized()*(b.id_data.matrix_world @ b.head - b.id_data.matrix_world @ p.tail).length
-                else: #indirect
+                else: # 间接
                     targetpos = p.wiggle.matrix @ relative_matrix(p.matrix, b.parent.matrix) @ Vector((0,b.parent.length,0))
                     target = targetpos + (b.wiggle.position_head - targetpos).normalized()*(b.id_data.matrix_world @ b.head - b.id_data.matrix_world @ b.parent.tail).length
             elif b.parent:
@@ -366,7 +366,7 @@ def constrain(b,i,dg):
                     ratio = (p.wiggle.matrix.translation - p.wiggle.position).length/(p.wiggle.matrix.translation - tailpos).length
                     tailpos -= s*fac
                     p.wiggle.position -= s*ratio*fac
-                else: #DOES THIS ASSUME ANYTHING? (No, head only translates, no bone stretching)
+                else: # 这有什么假设吗？ （不，头部只平移，没有骨骼伸展）
                     fac = get_fac(b.wiggle_mass_head, p.wiggle_mass_head) if i else p.wiggle_stretch_head
                     p.wiggle.position_head -= s*fac
                 b.wiggle.position_head += s*(1-fac)
@@ -374,7 +374,7 @@ def constrain(b,i,dg):
                 b.wiggle.position_head += s
                 
             target = b.wiggle.position_head + (b.wiggle.position - b.wiggle.position_head).normalized()*length_world(b)
-            if b.wiggle_tail: #tail stretch only relative to head
+            if b.wiggle_tail: # 尾部仅相对于头部伸展
                 s = stretch(target, b.wiggle.position, b.wiggle_stretch)
                 if b.wiggle_chain:
                     fac = get_fac(b.wiggle_mass, b.wiggle_mass_head) if i else b.wiggle_stretch_head
@@ -383,13 +383,13 @@ def constrain(b,i,dg):
                 else:
                     b.wiggle.position += s
             else: b.wiggle.position = target
-        else: #tail stretch relative to parent or none
+        else: # 相对于父级或无尾部伸展
             target = mat.translation + (b.wiggle.position - mat.translation).normalized()*length_world(b)
             s = stretch(target, b.wiggle.position, b.wiggle_stretch)
-            if p and b.wiggle_chain and p.wiggle_tail: #ASSUMES P IS DIRECT PARENT?
+            if p and b.wiggle_chain and p.wiggle_tail: # 假设 P 是直接父级？
 #                if p.wiggle_tail:
                 fac = get_fac(b.wiggle_mass, p.wiggle_mass) if i else p.wiggle_stretch
-                if p == b.parent and b.bone.use_connect: #optimization with direct parent tail
+                if p == b.parent and b.bone.use_connect: # 直接父级尾部优化
                     p.wiggle.position -= s*fac
                 else:
                     headpos = mat.translation
@@ -411,7 +411,7 @@ def constrain(b,i,dg):
                 b.wiggle.position += s
 
         if update_p:
-            collide(p,dg)#would only be tail changing
+            collide(p,dg)# 只会改变尾部
             update_matrix(p)
         if b.wiggle_tail:
             pin(b)
@@ -477,7 +477,7 @@ def wiggle_post(scene,dg):
         e1 = (scene.frame_end - lastframe) + (scene.frame_current - scene.frame_start) + 1
         e2 = lastframe - scene.frame_current
         frames_elapsed = min(e1,e2)
-    if frames_elapsed > 4: frames_elapsed = 1 #handle large jumps?
+    if frames_elapsed > 4: frames_elapsed = 1 # 处理大跳跃？
     if scene.wiggle.is_preroll: frames_elapsed = 1
     scene.wiggle.dt = 1/scene.render.fps * frames_elapsed
     scene.wiggle.lastframe = scene.frame_current
@@ -499,7 +499,7 @@ def wiggle_post(scene,dg):
             for b in bones:
                 constrain(b, scene.wiggle.iterations-1-i,dg)
         for b in bones:
-            update_matrix(b,True) #final update handling constraints?
+            update_matrix(b,True) # 最终更新处理约束？
         if frames_elapsed:
             for b in bones:
                 vb = Vector((0,0,0))
@@ -526,7 +526,7 @@ def wiggle_render_cancel(scene):
     scene.wiggle.is_rendering = False
             
 class WiggleCopy(bpy.types.Operator):
-    """Copy active wiggle settings to selected bones"""
+    """将活动的Wiggle设置复制到选中的骨骼"""
     bl_idname = "wiggle.copy"
     bl_label = "复制到选中"
     
@@ -577,7 +577,7 @@ class WiggleCopy(bpy.types.Operator):
         return {'FINISHED'}
 
 class WiggleReset(bpy.types.Operator):
-    """Reset scene wiggle physics to rest state"""
+    """将场景中所有Wiggle物理模拟重置为静止状态"""
     bl_idname = "wiggle.reset"
     bl_label = "重置模拟"
     
@@ -606,7 +606,7 @@ class WiggleReset(bpy.types.Operator):
         return {'FINISHED'}
     
 class WiggleSelect(bpy.types.Operator):
-    """Select wiggle bones on selected objects in pose mode"""
+    """在姿势模式下全选设置过Wiggle的骨骼"""
     bl_idname = "wiggle.select"
     bl_label = "全选 Wiggle"
     
@@ -632,7 +632,7 @@ class WiggleSelect(bpy.types.Operator):
         return {'FINISHED'}
     
 class WiggleBake(bpy.types.Operator):
-    """Bake this object's visible wiggle bones to keyframes"""
+    """将选中对象的可见Wiggle骨骼烘焙到关键帧"""
     bl_idname = "wiggle.bake"
     bl_label = "烘培 Wiggle"
     
@@ -655,7 +655,7 @@ class WiggleBake(bpy.types.Operator):
         
         bpy.ops.wiggle.reset()
             
-        #preroll
+        # 预解算
         duration = context.scene.frame_end - context.scene.frame_start
         preroll = context.scene.wiggle.preroll
         context.scene.wiggle.is_preroll = False
@@ -669,7 +669,7 @@ class WiggleBake(bpy.types.Operator):
                 context.scene.frame_set(context.scene.frame_start)
             context.scene.wiggle.is_preroll = True
             preroll -= 1
-        #bake
+        # 烘培
         bpy.ops.nla.bake(frame_start = context.scene.frame_start,
                         frame_end = context.scene.frame_end,
                         only_selected = True,
@@ -699,7 +699,7 @@ class WIGGLE_PT_Settings(WigglePanel, bpy.types.Panel):
         icon = 'HIDE_ON' if not context.scene.wiggle_enable else 'SCENE_DATA'
         row.prop(context.scene, "wiggle_enable", icon=icon, text="",emboss=False)
         if not context.scene.wiggle_enable:
-            row.label(text='场景隐藏')
+            row.label(text='场景未启用')
             return
         if not context.object.type == 'ARMATURE':
             row.label(text = ' 选择骨架')
@@ -891,7 +891,7 @@ class WiggleItem(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(override={'LIBRARY_OVERRIDABLE'})  
     list: bpy.props.CollectionProperty(type=WiggleBoneItem, override={'LIBRARY_OVERRIDABLE','USE_INSERTION'})    
 
-#store properties for a bone. custom properties for user editable. property group for internal calculations
+# 存储骨骼的属性。用户可编辑的自定义属性。内部计算的属性组
 class WiggleBone(bpy.types.PropertyGroup):
     matrix: bpy.props.FloatVectorProperty(name = 'Matrix', size=16, subtype = 'MATRIX', override={'LIBRARY_OVERRIDABLE'})
     position: bpy.props.FloatVectorProperty(subtype='TRANSLATION', override={'LIBRARY_OVERRIDABLE'})
@@ -929,7 +929,7 @@ class WiggleScene(bpy.types.PropertyGroup):
 
 def register():
     
-    #WIGGLE TOGGLES
+    # 模拟切换
     
     bpy.types.Scene.wiggle_enable = bpy.props.BoolProperty(
         name = '场景启用',
@@ -1006,7 +1006,7 @@ def register():
         update=lambda s, c: update_prop(s, c, 'wiggle_tail_mute')
     )
     
-    #TAIL PROPS
+    # 尾部道具
     
     bpy.types.PoseBone.wiggle_mass = bpy.props.FloatProperty(
         name = '质量',
@@ -1065,13 +1065,13 @@ def register():
     )
     bpy.types.PoseBone.wiggle_chain = bpy.props.BoolProperty(
         name = '链式',
-        description = '创建一个物理链，并影响它的父级',
+        description = '物理链效果，将影响父级',
         default = True,
         override={'LIBRARY_OVERRIDABLE'},
         update=lambda s, c: update_prop(s, c, 'wiggle_chain')
     )
     
-    #HEAD PROPS
+    # 头部道具
     
     bpy.types.PoseBone.wiggle_mass_head = bpy.props.FloatProperty(
         name = '质量',
@@ -1130,13 +1130,13 @@ def register():
     )
     bpy.types.PoseBone.wiggle_chain_head = bpy.props.BoolProperty(
         name = '链式',
-        description = '创建一个物理链，并影响它的父级',
+        description = '物理链效果，将影响父级',
         default = True,
         override={'LIBRARY_OVERRIDABLE'},
         update=lambda s, c: update_prop(s, c, 'wiggle_chain_head')
     )
     
-    #TAIL COLLISION
+    # 尾部碰撞
     
     bpy.types.PoseBone.wiggle_collider_type = bpy.props.EnumProperty(
         name='碰撞类型',
@@ -1196,7 +1196,7 @@ def register():
         update=lambda s, c: update_prop(s, c, 'wiggle_sticky')
     )
     
-    #HEAD COLLISION
+    # 头部碰撞
     
     bpy.types.PoseBone.wiggle_collider_type_head = bpy.props.EnumProperty(
         name='碰撞类型',
@@ -1256,7 +1256,7 @@ def register():
         update=lambda s, c: update_prop(s, c, 'wiggle_sticky_head')
     )
     
-    #internal variables
+    # 内部变量
     bpy.utils.register_class(WiggleBoneItem)
     bpy.utils.register_class(WiggleItem)
     bpy.utils.register_class(WiggleBone)
