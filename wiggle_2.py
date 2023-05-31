@@ -4,7 +4,7 @@ bl_info = {
     "version": (2, 2, 0),
     "blender": (3, 00, 0),
     "location": "3d Viewport > Animation Panel",
-    "description": "Simulate spring-like physics on Bone transforms",
+    "description": "在骨骼动画上模拟类似弹簧的惯性摇摆物理效果",
     "warning": "",
     "wiki_url": "https://github.com/shteeve3d/blender-wiggle-2",
     "category": "Animation",
@@ -528,7 +528,7 @@ def wiggle_render_cancel(scene):
 class WiggleCopy(bpy.types.Operator):
     """Copy active wiggle settings to selected bones"""
     bl_idname = "wiggle.copy"
-    bl_label = "Copy Settings to Selected"
+    bl_label = "复制到选中"
     
     @classmethod
     def poll(cls,context):
@@ -579,7 +579,7 @@ class WiggleCopy(bpy.types.Operator):
 class WiggleReset(bpy.types.Operator):
     """Reset scene wiggle physics to rest state"""
     bl_idname = "wiggle.reset"
-    bl_label = "Reset Physics"
+    bl_label = "重置模拟"
     
     @classmethod
     def poll(cls,context):
@@ -608,7 +608,7 @@ class WiggleReset(bpy.types.Operator):
 class WiggleSelect(bpy.types.Operator):
     """Select wiggle bones on selected objects in pose mode"""
     bl_idname = "wiggle.select"
-    bl_label = "Select Enabled"
+    bl_label = "全选 Wiggle"
     
     @classmethod
     def poll(cls,context):
@@ -634,7 +634,7 @@ class WiggleSelect(bpy.types.Operator):
 class WiggleBake(bpy.types.Operator):
     """Bake this object's visible wiggle bones to keyframes"""
     bl_idname = "wiggle.bake"
-    bl_label = "Bake Wiggle"
+    bl_label = "烘培 Wiggle"
     
     @classmethod
     def poll(cls,context):
@@ -699,29 +699,29 @@ class WIGGLE_PT_Settings(WigglePanel, bpy.types.Panel):
         icon = 'HIDE_ON' if not context.scene.wiggle_enable else 'SCENE_DATA'
         row.prop(context.scene, "wiggle_enable", icon=icon, text="",emboss=False)
         if not context.scene.wiggle_enable:
-            row.label(text='Scene muted.')
+            row.label(text='场景隐藏')
             return
         if not context.object.type == 'ARMATURE':
-            row.label(text = ' Select armature.')
+            row.label(text = ' 选择骨架')
             return
 #        row.label(icon='TRIA_RIGHT')
         if context.object.wiggle_freeze:
             row.prop(context.object,'wiggle_freeze',icon='FREEZE',icon_only=True,emboss=False)
-            row.label(text = 'Wiggle Frozen after Bake.')
+            row.label(text = '烘烤后冻结 wiggle')
             return
         icon = 'HIDE_ON' if context.object.wiggle_mute else 'ARMATURE_DATA'
         row.prop(context.object,'wiggle_mute',icon=icon,icon_only=True,invert_checkbox=True,emboss=False)
         if context.object.wiggle_mute:
-            row.label(text='Armature muted.')
+            row.label(text='屏蔽骨架')
             return
         if not context.active_pose_bone:
-            row.label(text = ' Select pose bone.')
+            row.label(text = ' 选择姿态骨骼')
             return
 #        row.label(icon='TRIA_RIGHT')
         icon = 'HIDE_ON' if context.active_pose_bone.wiggle_mute else 'BONE_DATA'
         row.prop(context.active_pose_bone,'wiggle_mute',icon=icon,icon_only=True,invert_checkbox=True,emboss=False)
         if context.active_pose_bone.wiggle_mute:
-            row.label(text='Bone muted.')
+            row.label(text='屏蔽骨骼')
             return
 
 class WIGGLE_PT_Head(WigglePanel,bpy.types.Panel):
@@ -844,7 +844,7 @@ class WIGGLE_PT_Tail(WigglePanel,bpy.types.Panel):
         layout.prop(b,'wiggle_chain')
 
 class WIGGLE_PT_Utilities(WigglePanel,bpy.types.Panel):
-    bl_label = 'Global Wiggle Utilities'
+    bl_label = '全局设置'
     bl_parent_id = 'WIGGLE_PT_Settings'
     bl_options = {"DEFAULT_CLOSED"}
     
@@ -865,7 +865,7 @@ class WIGGLE_PT_Utilities(WigglePanel,bpy.types.Panel):
         layout.prop(context.scene.wiggle, 'iterations')
         
 class WIGGLE_PT_Bake(WigglePanel,bpy.types.Panel):
-    bl_label = 'Bake Wiggle'
+    bl_label = '烘培 Wiggle'
     bl_parent_id = 'WIGGLE_PT_Utilities'
     bl_options = {"DEFAULT_CLOSED"}
     
@@ -917,13 +917,13 @@ class WiggleObject(bpy.types.PropertyGroup):
 class WiggleScene(bpy.types.PropertyGroup):
     dt: bpy.props.FloatProperty()
     lastframe: bpy.props.IntProperty()
-    iterations: bpy.props.IntProperty(name='Quality', description='Constraint solver interations for chain physics', min=1, default=2, soft_max=10, max=100)
-    loop: bpy.props.BoolProperty(name='Loop Physics', description='Physics continues as timeline loops', default=True)
+    iterations: bpy.props.IntProperty(name='质量', description='链式物理模拟的解算迭代次数', min=1, default=2, soft_max=10, max=100)
+    loop: bpy.props.BoolProperty(name='循环模拟', description='时间线循环时继续物理模拟', default=True)
     list: bpy.props.CollectionProperty(type=WiggleItem, override={'LIBRARY_OVERRIDABLE','USE_INSERTION'})
-    preroll: bpy.props.IntProperty(name = 'Preroll', description='Frames to run simulation before bake', min=0, default=0)
+    preroll: bpy.props.IntProperty(name = '预解算帧', description='需要解算并用于烘烤的帧数', min=0, default=0)
     is_preroll: bpy.props.BoolProperty(default=False)
-    bake_overwrite: bpy.props.BoolProperty(name='Overwrite Current Action', description='Bake wiggle into current action, instead of creating a new one', default = False)
-    bake_nla: bpy.props.BoolProperty(name='Current Action to NLA', description='Move existing animation on the armature into an NLA strip', default = False) 
+    bake_overwrite: bpy.props.BoolProperty(name='覆盖当前动画', description='模拟覆盖当前所有动画', default = False)
+    bake_nla: bpy.props.BoolProperty(name='创建至 NLA', description='将现有骨骼动画转移到NLA上', default = False) 
     is_rendering: bpy.props.BoolProperty(default=False)
     reset: bpy.props.BoolProperty(default=False)
 
@@ -932,59 +932,59 @@ def register():
     #WIGGLE TOGGLES
     
     bpy.types.Scene.wiggle_enable = bpy.props.BoolProperty(
-        name = 'Enable Scene',
-        description = 'Enable wiggle on this scene',
+        name = '场景启用',
+        description = '在这个场景中启用wiggle',
         default = False,
         override={'LIBRARY_OVERRIDABLE'},
         update=lambda s, c: update_prop(s, c, 'wiggle_enable')
     )
     bpy.types.Object.wiggle_enable = bpy.props.BoolProperty(
-        name = 'Enable Armature',
-        description = 'Enable wiggle on this armature',
+        name = '启用骨架',
+        description = '启用选中骨架',
         default = False,
         options={'HIDDEN'},
         override={'LIBRARY_OVERRIDABLE'}
 #        update=lambda s, c: update_prop(s, c, 'wiggle_enable')
     )
     bpy.types.Object.wiggle_mute = bpy.props.BoolProperty(
-        name = 'Mute Armature',
-        description = 'Mute wiggle on this armature.',
+        name = '屏蔽骨架',
+        description = '屏蔽选中骨架',
         default = False,
         override={'LIBRARY_OVERRIDABLE'},
         update=lambda s, c: update_prop(s, c, 'wiggle_mute')
     )
     bpy.types.Object.wiggle_freeze = bpy.props.BoolProperty(
-        name = 'Freeze Wiggle',
-        description = 'Wiggle Calculation frozen after baking',
+        name = '冻结 Wiggle',
+        description = '烘焙后冻结Wiggle解算',
         default = False,
         override={'LIBRARY_OVERRIDABLE'}
     )
     bpy.types.PoseBone.wiggle_enable = bpy.props.BoolProperty(
-        name = 'Enable Bone',
-        description = "Enable wiggle on this bone",
+        name = '启用骨骼',
+        description = "姿态模式时，在选中骨骼上启用",
         default = False,
         options={'HIDDEN'},
         override={'LIBRARY_OVERRIDABLE'}
 #        update=lambda s, c: update_prop(s, c, 'wiggle_enable')
     )
     bpy.types.PoseBone.wiggle_mute = bpy.props.BoolProperty(
-        name = 'Mute Bone',
-        description = "Mute wiggle for this bone.",
+        name = '屏蔽骨骼',
+        description = "姿态模式时，屏蔽选中骨骼",
         default = False,
         override={'LIBRARY_OVERRIDABLE'},
         update=lambda s, c: update_prop(s, c, 'wiggle_mute')
     )
     bpy.types.PoseBone.wiggle_head = bpy.props.BoolProperty(
-        name = 'Bone Head',
-        description = "Enable wiggle on this bone's head",
+        name = '启用头部',
+        description = "姿态模式时，启用选中骨骼的头部",
         default = False,
         override={'LIBRARY_OVERRIDABLE'},
         options={'HIDDEN'},
         update=lambda s, c: update_prop(s, c, 'wiggle_head')
     )
     bpy.types.PoseBone.wiggle_tail = bpy.props.BoolProperty(
-        name = 'Bone Tail',
-        description = "Enable wiggle on this bone's tail",
+        name = '启用尾部',
+        description = "姿态模式时，启用选中骨骼的尾部",
         default = False,
         override={'LIBRARY_OVERRIDABLE'},
         options={'HIDDEN'},
@@ -992,15 +992,15 @@ def register():
     )
     
     bpy.types.PoseBone.wiggle_head_mute = bpy.props.BoolProperty(
-        name = 'Bone Head Mute',
-        description = "Mute wiggle on this bone's head",
+        name = '屏蔽头部',
+        description = "屏蔽选中骨骼的头部",
         default = False,
         override={'LIBRARY_OVERRIDABLE'},
         update=lambda s, c: update_prop(s, c, 'wiggle_head_mute')
     )
     bpy.types.PoseBone.wiggle_tail_mute = bpy.props.BoolProperty(
-        name = 'Bone Tail Mute',
-        description = "Mute wiggle on this bone's tail",
+        name = '屏蔽尾部',
+        description = "屏蔽选中骨骼的尾部",
         default = False,
         override={'LIBRARY_OVERRIDABLE'},
         update=lambda s, c: update_prop(s, c, 'wiggle_tail_mute')
@@ -1009,24 +1009,24 @@ def register():
     #TAIL PROPS
     
     bpy.types.PoseBone.wiggle_mass = bpy.props.FloatProperty(
-        name = 'Mass',
-        description = 'Mass of bone',
+        name = '质量',
+        description = '骨骼的重量',
         min = 0.01,
         default = 1,
         override={'LIBRARY_OVERRIDABLE'},
         update=lambda s, c: update_prop(s, c, 'wiggle_mass')
     )
     bpy.types.PoseBone.wiggle_stiff = bpy.props.FloatProperty(
-        name = 'Stiff',
-        description = 'Spring stiffness coefficient, can be large numbers',
+        name = '硬度',
+        description = '刚度系数，可以是很大的数值',
         min = 0,
         default = 400,
         override={'LIBRARY_OVERRIDABLE'},
         update=lambda s, c: update_prop(s, c, 'wiggle_stiff')
     )
     bpy.types.PoseBone.wiggle_stretch = bpy.props.FloatProperty(
-        name = 'Stretch',
-        description = 'Bone stretchiness factor, 0 to 1 range',
+        name = '拉伸',
+        description = '拉伸变形系数，范围0到1',
         min = 0,
         default = 0,
         max=1,
@@ -1034,38 +1034,38 @@ def register():
         update=lambda s, c: update_prop(s, c, 'wiggle_stretch')
     )
     bpy.types.PoseBone.wiggle_damp = bpy.props.FloatProperty(
-        name = 'Damp',
-        description = 'Dampening coefficient, can be greater than 1',
+        name = '阻尼',
+        description = '阻尼系数，可以大于1',
         min = 0,
         default = 1,
         override={'LIBRARY_OVERRIDABLE'},
         update=lambda s, c: update_prop(s, c, 'wiggle_damp')
     )
     bpy.types.PoseBone.wiggle_gravity = bpy.props.FloatProperty(
-        name = 'Gravity',
-        description = 'Multiplier for scene gravity',
+        name = '重力',
+        description = '场景重力的乘数',
         default = 1,
         override={'LIBRARY_OVERRIDABLE'},
         update=lambda s, c: update_prop(s, c, 'wiggle_gravity')
     )
     bpy.types.PoseBone.wiggle_wind_ob = bpy.props.PointerProperty(
-        name='Wind', 
-        description='Wind force field object', 
+        name='风力', 
+        description='风力对象', 
         type=bpy.types.Object, 
         poll = wind_poll, 
         override={'LIBRARY_OVERRIDABLE'}, 
         update=lambda s, c: update_prop(s, c, 'wiggle_wind_ob')
     )
     bpy.types.PoseBone.wiggle_wind = bpy.props.FloatProperty(
-        name = 'Wind Multiplier',
-        description = 'Multiplier for wind forces',
+        name = '风力',
+        description = '风力的乘数',
         default = 1,
         override={'LIBRARY_OVERRIDABLE'},
         update=lambda s, c: update_prop(s, c, 'wiggle_wind')
     )
     bpy.types.PoseBone.wiggle_chain = bpy.props.BoolProperty(
-        name = 'Chain',
-        description = 'Bone affects its parent creating a physics chain',
+        name = '链式',
+        description = '创建一个物理链，并影响它的父级',
         default = True,
         override={'LIBRARY_OVERRIDABLE'},
         update=lambda s, c: update_prop(s, c, 'wiggle_chain')
@@ -1074,24 +1074,24 @@ def register():
     #HEAD PROPS
     
     bpy.types.PoseBone.wiggle_mass_head = bpy.props.FloatProperty(
-        name = 'Mass',
-        description = 'Mass of bone',
+        name = '质量',
+        description = '骨骼的重量',
         min = 0.01,
         default = 1,
         override={'LIBRARY_OVERRIDABLE'},
         update=lambda s, c: update_prop(s, c, 'wiggle_mass_head')
     )
     bpy.types.PoseBone.wiggle_stiff_head = bpy.props.FloatProperty(
-        name = 'Stiff',
-        description = 'Spring stiffness coefficient, can be large numbers',
+        name = '硬度',
+        description = '刚度系数，可以是很大的数值',
         min = 0,
         default = 400,
         override={'LIBRARY_OVERRIDABLE'},
         update=lambda s, c: update_prop(s, c, 'wiggle_stiff_head')
     )
     bpy.types.PoseBone.wiggle_stretch_head = bpy.props.FloatProperty(
-        name = 'Stretch',
-        description = 'Bone stretchiness factor, 0 to 1 range',
+        name = '拉伸',
+        description = '拉伸变形系数，范围0到1',
         min = 0,
         default = 0,
         max=1,
@@ -1099,38 +1099,38 @@ def register():
         update=lambda s, c: update_prop(s, c, 'wiggle_stretch_head')
     )
     bpy.types.PoseBone.wiggle_damp_head = bpy.props.FloatProperty(
-        name = 'Damp',
-        description = 'Dampening coefficient, can be greater than 1',
+        name = '阻尼',
+        description = '阻尼系数，可以大于1',
         min = 0,
         default = 1,
         override={'LIBRARY_OVERRIDABLE'},
         update=lambda s, c: update_prop(s, c, 'wiggle_damp_head')
     )
     bpy.types.PoseBone.wiggle_gravity_head = bpy.props.FloatProperty(
-        name = 'Gravity',
-        description = 'Multiplier for scene gravity',
+        name = '重力',
+        description = '场景重力的乘数',
         default = 1,
         override={'LIBRARY_OVERRIDABLE'},
         update=lambda s, c: update_prop(s, c, 'wiggle_gravity_head')
     )
     bpy.types.PoseBone.wiggle_wind_ob_head = bpy.props.PointerProperty(
-        name='Wind', 
-        description='Wind force field object', 
+        name='风力', 
+        description='风力对象', 
         type=bpy.types.Object, 
         poll = wind_poll, 
         override={'LIBRARY_OVERRIDABLE'}, 
         update=lambda s, c: update_prop(s, c, 'wiggle_wind_ob_head')
     )
     bpy.types.PoseBone.wiggle_wind_head = bpy.props.FloatProperty(
-        name = 'Wind',
-        description = 'Multiplier for wind forces',
+        name = '风力',
+        description = '风力的乘数',
         default = 1,
         override={'LIBRARY_OVERRIDABLE'},
         update=lambda s, c: update_prop(s, c, 'wiggle_wind_head')
     )
     bpy.types.PoseBone.wiggle_chain_head = bpy.props.BoolProperty(
-        name = 'Chain',
-        description = 'Bone affects its parent creating a physics chain',
+        name = '链式',
+        description = '创建一个物理链，并影响它的父级',
         default = True,
         override={'LIBRARY_OVERRIDABLE'},
         update=lambda s, c: update_prop(s, c, 'wiggle_chain_head')
@@ -1139,38 +1139,38 @@ def register():
     #TAIL COLLISION
     
     bpy.types.PoseBone.wiggle_collider_type = bpy.props.EnumProperty(
-        name='Collider Type',
+        name='碰撞类型',
         items=[('Object','Object','Collide with a selected mesh'),('Collection','Collection','Collide with all meshes in selected collection')],
         override={'LIBRARY_OVERRIDABLE'},
         update=lambda s, c: update_prop(s, c, 'wiggle_collider_type')
     )
     bpy.types.PoseBone.wiggle_collider = bpy.props.PointerProperty(
-        name='Collider Object', 
-        description='Mesh object to collide with', 
+        name='碰撞对象', 
+        description='用网格对象进行碰撞', 
         type=bpy.types.Object, 
         poll = collider_poll, 
         override={'LIBRARY_OVERRIDABLE'}, 
         update=lambda s, c: update_prop(s, c, 'wiggle_collider')
     )
     bpy.types.PoseBone.wiggle_collider_collection = bpy.props.PointerProperty(
-        name = 'Collider Collection', 
-        description='Collection to collide with', 
+        name = '碰撞集合', 
+        description='用集合进行碰撞', 
         type=bpy.types.Collection, 
         override={'LIBRARY_OVERRIDABLE'}, 
         update=lambda s, c: update_prop(s, c, 'wiggle_collider_collection')
     )
     
     bpy.types.PoseBone.wiggle_radius = bpy.props.FloatProperty(
-        name = 'Radius',
-        description = 'Collision radius',
+        name = '半径',
+        description = '产生碰撞的半径',
         min = 0,
         default = 0,
         override={'LIBRARY_OVERRIDABLE'},
         update=lambda s, c: update_prop(s, c, 'wiggle_radius')
     )
     bpy.types.PoseBone.wiggle_friction = bpy.props.FloatProperty(
-        name = 'Friction',
-        description = 'Friction when colliding',
+        name = '摩擦',
+        description = '碰撞时的摩擦力',
         min = 0,
         default = 0.5,
         soft_max = 1,
@@ -1178,8 +1178,8 @@ def register():
         update=lambda s, c: update_prop(s, c, 'wiggle_friction')
     )
     bpy.types.PoseBone.wiggle_bounce = bpy.props.FloatProperty(
-        name = 'Bounce',
-        description = 'Bounciness when colliding',
+        name = '弹性',
+        description = '碰撞时的弹跳力',
         min = 0,
         default = 0.5,
         soft_max = 1,
@@ -1187,8 +1187,8 @@ def register():
         update=lambda s, c: update_prop(s, c, 'wiggle_bounce')
     )
     bpy.types.PoseBone.wiggle_sticky = bpy.props.FloatProperty(
-        name = 'Sticky',
-        description = 'Margin beyond radius to keep item stuck to surface',
+        name = '粘性',
+        description = '碰撞时的粘性程度',
         min = 0,
         default = 0,
         soft_max = 1,
@@ -1199,38 +1199,38 @@ def register():
     #HEAD COLLISION
     
     bpy.types.PoseBone.wiggle_collider_type_head = bpy.props.EnumProperty(
-        name='Collider Type',
+        name='碰撞类型',
         items=[('Object','Object','Collide with a selected mesh'),('Collection','Collection','Collide with all meshes in selected collection')],
         override={'LIBRARY_OVERRIDABLE'},
         update=lambda s, c: update_prop(s, c, 'wiggle_collider_type_head')
     )
     bpy.types.PoseBone.wiggle_collider_head = bpy.props.PointerProperty(
-        name='Collider Object', 
-        description='Mesh object to collide with', 
+        name='碰撞对象', 
+        description='用网格对象进行碰撞', 
         type=bpy.types.Object, 
         poll = collider_poll, 
         override={'LIBRARY_OVERRIDABLE'}, 
         update=lambda s, c: update_prop(s, c, 'wiggle_collider_head')
     )
     bpy.types.PoseBone.wiggle_collider_collection_head = bpy.props.PointerProperty(
-        name = 'Collider Collection', 
-        description='Collection to collide with', 
+        name = '碰撞集合', 
+        description='用集合进行碰撞', 
         type=bpy.types.Collection, 
         override={'LIBRARY_OVERRIDABLE'}, 
         update=lambda s, c: update_prop(s, c, 'wiggle_collider_collection_head')
     )
     
     bpy.types.PoseBone.wiggle_radius_head = bpy.props.FloatProperty(
-        name = 'Radius',
-        description = 'Collision radius',
+        name = '半径',
+        description = '产生碰撞的半径',
         min = 0,
         default = 0,
         override={'LIBRARY_OVERRIDABLE'},
         update=lambda s, c: update_prop(s, c, 'wiggle_radius_head')
     )
     bpy.types.PoseBone.wiggle_friction_head = bpy.props.FloatProperty(
-        name = 'Friction',
-        description = 'Friction when colliding',
+        name = '摩擦',
+        description = '碰撞时的摩擦力',
         min = 0,
         default = 0.5,
         soft_max = 1,
@@ -1238,8 +1238,8 @@ def register():
         update=lambda s, c: update_prop(s, c, 'wiggle_friction_head')
     )
     bpy.types.PoseBone.wiggle_bounce_head = bpy.props.FloatProperty(
-        name = 'Bounce',
-        description = 'Bounciness when colliding',
+        name = '弹性',
+        description = '碰撞时的弹跳力',
         min = 0,
         default = 0.5,
         soft_max = 1,
@@ -1247,8 +1247,8 @@ def register():
         update=lambda s, c: update_prop(s, c, 'wiggle_bounce_head')
     )
     bpy.types.PoseBone.wiggle_sticky_head = bpy.props.FloatProperty(
-        name = 'Sticky',
-        description = 'Margin beyond radius to keep item stuck to surface',
+        name = '粘性',
+        description = '碰撞时的粘性程度',
         min = 0,
         default = 0,
         soft_max = 1,
