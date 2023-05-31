@@ -669,7 +669,7 @@ class WiggleBake(bpy.types.Operator):
                 context.scene.frame_set(context.scene.frame_start)
             context.scene.wiggle.is_preroll = True
             preroll -= 1
-        # 烘培Wiggle
+        # 烘培
         bpy.ops.nla.bake(frame_start = context.scene.frame_start,
                         frame_end = context.scene.frame_end,
                         only_selected = True,
@@ -715,7 +715,7 @@ class WIGGLE_PT_Settings(WigglePanel, bpy.types.Panel):
             row.label(text='屏蔽骨架')
             return
         if not context.active_pose_bone:
-            row.label(text = ' 选择姿态骨骼')
+            row.label(text = ' 姿态模式选择骨骼')
             return
 #        row.label(icon='TRIA_RIGHT')
         icon = 'HIDE_ON' if context.active_pose_bone.wiggle_mute else 'BONE_DATA'
